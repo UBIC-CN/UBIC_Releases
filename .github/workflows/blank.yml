@@ -1,0 +1,68 @@
+name: build ubic 
+
+on:
+  push:
+  schedule:
+  - cron:  '30 00 * * *'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    # 切代码到 runner
+    - run: |
+        node -v
+    - run: |
+        free -h
+    - run: ls -lah
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+    - run: ls -lah
+    # 下载 git submodule
+    - uses: srt32/git-actions@v0.0.3
+      with:
+        args: git submodule update --init --recursive
+    # 使用 node:10
+    - name: use Node.js 10.x
+      uses: actions/setup-node@v1
+      with:
+        node-version: 10.x
+    - run: |
+        node -v
+    - name: apt install
+      run: sudo apt-get update && sudo apt-get install git cmake gcc make libleveldb-dev libpcsclite1 libpcsclite-dev libboost-all-dev gcc g++ ntp
+    - name: install ntp
+      run: sudo apt-get install ntp
+    - name: install openssl
+      run: sudo wget https://www.openssl.org/source/openssl-1.1.1f.tar.gz && sudo tar xzvf openssl-1.1.1f.tar.gz && cd openssl-1.1.1f && sudo ./config -Wl,--enable-new-dtags,-rpath,'$(LIBRPATH)' && sudo make && sudo make install && sudo cp /usr/local/lib/libcrypto.so.1.1 /usr/lib && sudo cp /usr/local/lib/libssl.so.1.1 /usr/lib
+    - name: install core
+      run: cd /usr/local/src && sudo git clone https://github.com/UBIC-repo/core.git && sudo chmod 777 -R core && cd core && cmake CMakeLists.txt && make
+    - name: zip
+      run: cd /usr/local/src/core && zip -r ubic.zip ubic ubicd /usr/local/src/core/Static/*
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+    - name: Upload Release Asset
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ github.workspace }}/test2.zip
+        asset_name: nainiu_upload.zip
+        asset_content_type: application/zip
+
+
+
+        
