@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ master ]
   schedule:
-  - cron:  '01 00 * * *'
+  - cron:  '05 00 * * *'
 
 jobs:
   build:
@@ -38,8 +38,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v6.0
-        release_name: Release v6.0 
+        tag_name: v6.0.1
+        release_name: Release v6.0.1
         draft: false
         prerelease: false
     - name: Upload Release Asset
